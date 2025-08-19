@@ -1,0 +1,1 @@
+ALTER TABLE products ADD COLUMN status ENUM('active', 'inactive') DEFAULT 'active'; 
