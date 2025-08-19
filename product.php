@@ -16,9 +16,10 @@
     $product_id = $_GET['id'];
     
     // Get product details with its category
-    $sqlProduct = "SELECT p.*, c.name as category_name, c.id as category_id 
+    $sqlProduct = "SELECT p.*, c.name as category_name, c.id as category_id,
+                          COALESCE(p.image_url, 'img/placeholder.jpg') as image_url
                   FROM products p 
-                  LEFT JOIN product_categories c ON p.category_id = c.id 
+                  LEFT JOIN categories c ON p.category_id = c.id 
                   WHERE p.id = :id";
     $stmtProduct = $db->prepare($sqlProduct);
     $stmtProduct->bindParam(':id', $product_id);
@@ -31,7 +32,10 @@
     }
     
     // Get related products from the same category
-    $sqlRelated = "SELECT * FROM products WHERE category_id = :category_id AND id != :id LIMIT 4";
+    $sqlRelated = "SELECT *, COALESCE(image_url, 'img/placeholder.jpg') as image_url 
+                   FROM products 
+                   WHERE category_id = :category_id AND id != :id AND is_active = 1 
+                   LIMIT 4";
     $stmtRelated = $db->prepare($sqlRelated);
     $stmtRelated->bindParam(':category_id', $product['category_id']);
     $stmtRelated->bindParam(':id', $product_id);

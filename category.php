@@ -38,7 +38,8 @@
     $allCategoryIds = array_merge([$category_id], $subcategoryIds);
     $placeholders = str_repeat('?,', count($allCategoryIds) - 1) . '?';
 
-    $sqlProducts = "SELECT p.*, c.name as category_name 
+    $sqlProducts = "SELECT p.*, c.name as category_name,
+                           COALESCE(p.image_url, 'img/placeholder.jpg') as image_url
                    FROM products p 
                    LEFT JOIN categories c ON p.category_id = c.id 
                    WHERE p.category_id IN ($placeholders) AND p.is_active = 1 

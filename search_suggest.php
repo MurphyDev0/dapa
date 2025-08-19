@@ -68,10 +68,10 @@ try {
     $prefixTerm = $query . '%';
     
     // SQL query to search products
-    $sql = "SELECT id, name, img, short_desc, price 
+    $sql = "SELECT id, name, image_url as img, description as short_desc, price 
             FROM products 
-            WHERE (name LIKE :search OR short_desc LIKE :search)
-            AND active = 1
+            WHERE (name LIKE :search OR description LIKE :search)
+            AND is_active = 1
             ORDER BY 
                 CASE WHEN name LIKE :prefix THEN 0 ELSE 1 END,
                 name ASC
@@ -89,17 +89,17 @@ try {
     foreach ($results as $row) {
         $snippet = '';
         if (!empty($row['short_desc'])) {
-            $snippet = mb_substr(strip_tags($row['short_desc']), 0, 80);
-            if (mb_strlen($row['short_desc']) > 80) {
+            $snippet = mb_substr(strip_tags($row['short_desc']), 0, 80, 'UTF-8');
+            if (mb_strlen($row['short_desc'], 'UTF-8') > 80) {
                 $snippet .= '...';
             }
         }
         
         $suggestions[] = [
             'id' => (int)$row['id'],
-            'name' => $row['name'],
+            'name' => htmlspecialchars($row['name'], ENT_QUOTES, 'UTF-8'),
             'img' => $row['img'] ?: '',
-            'snippet' => $snippet,
+            'snippet' => htmlspecialchars($snippet, ENT_QUOTES, 'UTF-8'),
             'price' => isset($row['price']) ? (float)$row['price'] : null
         ];
     }

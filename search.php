@@ -46,8 +46,8 @@ $totalResults = 0;
 try {
     // Count total results
     $countSql = "SELECT COUNT(*) FROM products 
-                 WHERE (name LIKE :query OR short_desc LIKE :query OR long_desc LIKE :query)
-                 AND active = 1";
+                 WHERE (name LIKE :query OR description LIKE :query)
+                 AND is_active = 1";
     $countStmt = $pdo->prepare($countSql);
     $searchTerm = '%' . $searchQuery . '%';
     $countStmt->bindParam(':query', $searchTerm, PDO::PARAM_STR);
@@ -56,10 +56,10 @@ try {
 
     // Get products for current page
     if ($totalResults > 0) {
-        $sql = "SELECT id, name, price, short_desc, img, category_id
+        $sql = "SELECT id, name, price, description as short_desc, image_url as img, category_id
                 FROM products 
-                WHERE (name LIKE :query OR short_desc LIKE :query OR long_desc LIKE :query)
-                AND active = 1
+                WHERE (name LIKE :query OR description LIKE :query)
+                AND is_active = 1
                 ORDER BY 
                     CASE WHEN name LIKE :prefix THEN 0 ELSE 1 END,
                     name ASC
@@ -249,8 +249,8 @@ $is_admin = isset($_SESSION['is_admin']) ? $_SESSION['is_admin'] : 0;
                             
                             <?php if (!empty($product['short_desc'])): ?>
                                 <p class="text-sm text-gray-600 mb-3 line-clamp-3">
-                                    <?= htmlspecialchars(mb_substr(strip_tags($product['short_desc']), 0, 120)) ?>
-                                    <?= mb_strlen($product['short_desc']) > 120 ? '...' : '' ?>
+                                    <?= htmlspecialchars(mb_substr(strip_tags($product['short_desc']), 0, 120, 'UTF-8')) ?>
+                                    <?= mb_strlen($product['short_desc'], 'UTF-8') > 120 ? '...' : '' ?>
                                 </p>
                             <?php endif; ?>
                             

@@ -390,12 +390,12 @@ $statusClasses = [
               <?php while ($order = $recentOrdersResult->fetch()): ?>
               <tr>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary-darkest">#<?php echo $order['id']; ?></td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-primary-dark"><?php echo htmlspecialchars($order['user_name']); ?></td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-primary-dark"><?php echo htmlspecialchars($order['user_name'] ?? 'N/A'); ?></td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-primary-dark"><?php echo date('Y-m-d H:i', strtotime($order['created_at'])); ?></td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-primary-dark"><?php echo number_format($order['total_amount'], 0, '.', ' '); ?> Ft</td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <span class="px-2 py-1 text-xs rounded-full <?php echo $statusClasses[$order['status']] ?? 'bg-gray-100 text-gray-800'; ?>">
-                    <?php echo htmlspecialchars($order['status']); ?>
+                  <span class="px-2 py-1 text-xs rounded-full <?php echo $statusClasses[$order['status'] ?? 'pending'] ?? 'bg-gray-100 text-gray-800'; ?>">
+                    <?php echo htmlspecialchars($order['status'] ?? 'pending'); ?>
                   </span>
                 </td>
               </tr>

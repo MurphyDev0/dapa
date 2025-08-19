@@ -57,6 +57,7 @@
             <div class="search-bar" bis_skin_checked="1">
                 <form action="search.php" method="GET" class="flex items-center">
                     <input type="text" id="search-input" name="search-query" placeholder="Keresés..." class="search-input" required>
+                    <div id="search-suggestions" class="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-b-lg shadow-lg z-50 hidden max-h-96 overflow-y-auto"></div>
                 </form>
                 <button type="button" class="search-button">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -298,9 +299,12 @@
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
-                });
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }
             });
         });
 
@@ -321,12 +325,155 @@
 
         const searchBtn = document.querySelector(".search-button");
         const searchInput = document.querySelector("#search-input");
+        const searchSuggestions = document.getElementById("search-suggestions");
+        let searchTimeout;
+        let currentFocus = -1;
 
         searchBtn.addEventListener("click", () => {
             searchInput.classList.toggle("active");
             if (searchInput.classList.contains("active")) {
                 searchInput.focus();
+            } else {
+                hideSuggestions();
             }
+        });
+
+        // Keresési javaslatok funkció
+        searchInput.addEventListener("input", function() {
+            const query = this.value.trim();
+            
+            // Töröljük az előző timeout-ot
+            clearTimeout(searchTimeout);
+            
+            if (query.length < 2) {
+                hideSuggestions();
+                return;
+            }
+            
+            // 300ms késleltetés a túl gyakori kérések elkerülésére
+            searchTimeout = setTimeout(() => {
+                fetchSuggestions(query);
+            }, 300);
+        });
+
+        // Billentyűzet navigáció a javaslatokban
+        searchInput.addEventListener("keydown", function(e) {
+            const suggestions = searchSuggestions.querySelectorAll("li");
+            
+            if (e.key === "ArrowDown") {
+                e.preventDefault();
+                currentFocus++;
+                if (currentFocus >= suggestions.length) currentFocus = 0;
+                setActiveSuggestion(suggestions);
+            } else if (e.key === "ArrowUp") {
+                e.preventDefault();
+                currentFocus--;
+                if (currentFocus < 0) currentFocus = suggestions.length - 1;
+                setActiveSuggestion(suggestions);
+            } else if (e.key === "Enter") {
+                e.preventDefault();
+                if (currentFocus > -1 && suggestions[currentFocus]) {
+                    suggestions[currentFocus].click();
+                } else {
+                    // Ha nincs kiválasztott javaslat, küldje el a formot
+                    this.closest('form').submit();
+                }
+            } else if (e.key === "Escape") {
+                hideSuggestions();
+            }
+        });
+
+        // Javaslatok lekérése
+        function fetchSuggestions(query) {
+            fetch(`search_suggest.php?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    displaySuggestions(data);
+                })
+                .catch(error => {
+                    console.error('Keresési javaslatok hiba:', error);
+                    hideSuggestions();
+                });
+        }
+
+        // Javaslatok megjelenítése
+        function displaySuggestions(suggestions) {
+            if (!suggestions || suggestions.length === 0) {
+                hideSuggestions();
+                return;
+            }
+            
+            let html = '';
+            suggestions.forEach((item, index) => {
+                const price = item.price ? `${new Intl.NumberFormat('hu-HU').format(item.price)} Ft` : '';
+                const image = item.img ? `<img src="${item.img}" alt="${item.name}" class="w-10 h-10 object-cover rounded">` : 
+                             '<div class="w-10 h-10 bg-gray-200 rounded flex items-center justify-center"><svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>';
+                
+                html += `
+                    <li class="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0" 
+                        onclick="selectSuggestion('${item.name}', ${item.id})">
+                        <div class="flex items-center space-x-3">
+                            ${image}
+                            <div class="flex-1 min-w-0">
+                                <div class="font-medium text-gray-900 truncate">${item.name}</div>
+                                ${item.snippet ? `<div class="text-sm text-gray-500 truncate">${item.snippet}</div>` : ''}
+                            </div>
+                            ${price ? `<div class="text-sm font-medium text-primary-dark">${price}</div>` : ''}
+                        </div>
+                    </li>
+                `;
+            });
+            
+            searchSuggestions.innerHTML = `<ul class="py-1">${html}</ul>`;
+            searchSuggestions.classList.remove("hidden");
+            currentFocus = -1;
+        }
+
+        // Javaslat kiválasztása
+        function selectSuggestion(name, productId) {
+            if (productId) {
+                // Ha van termék ID, irányítsuk át a termék oldalára
+                window.location.href = `product.php?id=${productId}`;
+            } else {
+                // Egyébként töltsük ki a keresőmezőt és küldjük el a formot
+                searchInput.value = name;
+                searchInput.closest('form').submit();
+            }
+        }
+
+        // Aktív javaslat beállítása
+        function setActiveSuggestion(suggestions) {
+            suggestions.forEach((item, index) => {
+                if (index === currentFocus) {
+                    item.classList.add("focused", "bg-gray-100");
+                } else {
+                    item.classList.remove("focused", "bg-gray-100");
+                }
+            });
+        }
+
+        // Javaslatok elrejtése
+        function hideSuggestions() {
+            searchSuggestions.classList.add("hidden");
+            currentFocus = -1;
+        }
+
+        // Kattintás a dokumentumon kívül - javaslatok elrejtése
+        document.addEventListener("click", function(e) {
+            if (!searchInput.contains(e.target) && !searchSuggestions.contains(e.target) && !searchBtn.contains(e.target)) {
+                hideSuggestions();
+            }
+        });
+
+        // Form submit kezelése
+        searchInput.closest('form').addEventListener('submit', function(e) {
+            const query = searchInput.value.trim();
+            if (query.length < 2) {
+                e.preventDefault();
+                alert('Kérjük, adjon meg legalább 2 karaktert a kereséshez.');
+                return false;
+            }
+            hideSuggestions();
         });
 
         const scrollBtn = document.getElementById("scroll-to-top");
@@ -345,6 +492,9 @@
             behavior: "smooth"
         });
         });
+
+        // Globális függvények elérhetővé tétele
+        window.selectSuggestion = selectSuggestion;
     </script>
 </body>
 </html>

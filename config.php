@@ -34,15 +34,22 @@ ini_set('display_errors', 1);
 
 // Globális függvények
 function sanitize($input) {
-    return htmlspecialchars(strip_tags(trim($input)), ENT_QUOTES, 'UTF-8');
+    if (is_array($input)) {
+        return array_map('sanitize', $input);
+    }
+    return htmlspecialchars(strip_tags(trim((string)$input)), ENT_QUOTES, 'UTF-8');
 }
 
 function formatPrice($price) {
-    return number_format($price, 0, ',', ' ') . ' Ft';
+    return number_format((float)$price, 0, ',', ' ') . ' Ft';
 }
 
 function formatDate($date) {
-    return date('Y-m-d H:i:s', strtotime($date));
+    if (empty($date)) {
+        return date('Y-m-d H:i:s');
+    }
+    $timestamp = is_numeric($date) ? $date : strtotime($date);
+    return date('Y-m-d H:i:s', $timestamp);
 }
 
 // Adatbázis kapcsolat globális elérhetővé tétele

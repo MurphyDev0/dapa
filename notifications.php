@@ -26,7 +26,19 @@ class Notification {
             return '';
         }
 
-        $html = '<div class="notification-container">';
+        $html = '<div class="notification-container"><script>
+            document.addEventListener("DOMContentLoaded", function() {
+                setTimeout(function() {
+                    const notifications = document.querySelectorAll(".notification");
+                    notifications.forEach(function(notification) {
+                        notification.classList.add("removing");
+                        setTimeout(function() {
+                            notification.remove();
+                        }, 300);
+                    });
+                }, 5000);
+            });
+        </script>';
         foreach ($notifications as $notification) {
             $html .= sprintf(
                 '<div class="notification notification-%s">

@@ -655,12 +655,15 @@ svg:hover {
 .search-bar { 
   display: flex;
   align-items: center;
+  position: relative;
 }
 
 .search-bar form {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  position: relative;
+  width: 100%;
 }
 
 .search-input {
@@ -713,6 +716,32 @@ svg:hover {
     box-shadow: 0 0 10px var(--primary-lightest)
 }
 
+/* Keresési javaslatok stílusa */
+#search-suggestions {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 0 0 0.5rem 0.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+#search-suggestions li {
+    transition: background-color 0.2s ease;
+}
+
+#search-suggestions li:hover,
+#search-suggestions li.focused {
+    background-color: #f3f4f6;
+}
+
+#search-suggestions .truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 @media (max-width: 640px) {
   .header .container{
     flex-direction: column;
@@ -722,6 +751,12 @@ svg:hover {
   .search-input {
     width: 100%;
     min-width: 0;
+  }
+  
+  #search-suggestions {
+    left: 0;
+    right: 0;
+    margin: 0 1rem;
   }
 }
 

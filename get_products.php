@@ -16,7 +16,8 @@
 
     // Termékek lekérése
     try {
-        $sqlProducts = "SELECT p.*, c.name as category_name 
+        $sqlProducts = "SELECT p.*, c.name as category_name, 
+                               COALESCE(p.image_url, 'img/placeholder.jpg') as image_url
                        FROM products p 
                        LEFT JOIN categories c ON p.category_id = c.id 
                        WHERE p.is_active = 1 
